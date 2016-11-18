@@ -1,4 +1,5 @@
 GO ?= go
+EPOCH_TEST_COMMIT ?= 736c36c1a11b690b105056bdd627a37c97011ffd 
 PROJECT := github.com/mrunalp/kpod
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 GIT_BRANCH_CLEAN := $(shell echo $(GIT_BRANCH) | sed -e "s/[^[:alnum:]]/-/g")
@@ -48,6 +49,16 @@ clean:
 	find . -name \#\* -delete
 
 binaries: kpod
+
+.PHONY: .gitvalidation
+# When this is running in travis, it will only check the travis commit range
+.gitvalidation:
+	@which git-validation > /dev/null 2>/dev/null || (echo "ERROR: git-validation not found. Consider 'make install.tools' target" && false)
+ifeq ($(TRAVIS),true)
+	git-validation -q -run DCO,short-subject
+else
+	git-validation -v -run DCO,short-subject -range $(EPOCH_TEST_COMMIT)..HEAD
+endif
 
 .PHONY: install.tools
 
