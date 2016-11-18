@@ -23,6 +23,12 @@ help:
 	@echo
 	@echo " * 'binaries' - Build kpod"
 	@echo " * 'clean' - Clean artifacts"
+	@echo " * 'lint' - Execute the source code linter"
+
+lint: ${KPOD_LINK}
+	@which gometalinter > /dev/null 2>/dev/null || (echo "ERROR: gometalinter not found. Consider 'make install.tools' target" && false)
+	@echo "checking lint"
+	@./.tool/lint
 
 
 ${KPOD_LINK}:
@@ -43,7 +49,21 @@ clean:
 
 binaries: kpod
 
+.PHONY: install.tools
+
+install.tools: .install.gitvalidation .install.gometalinter .install.md2man
+
+.install.gitvalidation:
+	GOPATH=${SYSTEM_GOPATH} go get github.com/vbatts/git-validation
+
+.install.gometalinter:
+	GOPATH=${SYSTEM_GOPATH} go get github.com/alecthomas/gometalinter
+	GOPATH=${SYSTEM_GOPATH} gometalinter --install
+
+.install.md2man:
+	GOPATH=${SYSTEM_GOPATH} go get github.com/cpuguy83/go-md2man
 
 .PHONY: \
 	binaries \
-	clean
+	clean \
+	lint
