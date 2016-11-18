@@ -1,0 +1,22 @@
+language: go
+go:
+  - 1.6
+  - 1.7
+  - tip
+
+sudo: required
+
+services:
+  - docker
+
+install:
+  - make install.tools
+
+before_script:
+  - export PATH=$HOME/gopath/bin:$PATH
+
+script:
+  - make .gitvalidation
+  - make lint
+  - make integration
+  - make docs
