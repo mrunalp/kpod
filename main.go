@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/urfave/cli"
@@ -22,17 +22,7 @@ func main() {
 	app.Flags = []cli.Flag{}
 	app.Commands = []cli.Command{}
 
-	app.Run(os.Args)
-}
-
-func generateBashCompletion(c *cli.Context) {
-	tasks := []string{}
-
-	// This will complete if no args are passed
-	if c.NArg() > 0 {
-		return
-	}
-	for _, t := range tasks {
-		fmt.Println(t)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
 	}
 }
