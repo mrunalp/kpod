@@ -1,4 +1,4 @@
-package main
+package systemcontainer
 
 import (
 	"errors"
@@ -10,13 +10,13 @@ import (
 // Public Functions
 
 // RunContainer runs a container with given ID
-func RunContainer(containerID string, containerPath string) error {
+func RunSystemContainer(containerID string, containerPath string) error {
 	conn, err := dbus.NewSystemConnection()
 	if err != nil {
 		return err
 	}
 
-	return runContainerInternal(containerID, containerPath, conn)
+	return runSysContainerInternal(containerID, containerPath, conn)
 }
 
 // Internal Functions
@@ -27,7 +27,7 @@ func getUnitName(containerID string) string {
 }
 
 // Schedule a container as a transient systemd unit
-func runContainerInternal(containerID, containerPath string, conn *dbus.Conn) error {
+func runSysContainerInternal(containerID, containerPath string, conn *dbus.Conn) error {
 	if conn == nil {
 		return errors.New("No connection to DBus available!")
 	}

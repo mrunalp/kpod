@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli"
+	"github.com/mrunalp/kpod/systemcontainer"
 )
 
 const (
@@ -34,7 +35,7 @@ func main() {
 		}
 
 		// TODO use a reasonable containerID - randomly generate or pull from a flag
-		if err := RunContainer("123456", c.String("path")); err != nil {
+		if err := systemcontainer.RunSystemContainer("123456", c.String("path")); err != nil {
 			return err
 		}
 
