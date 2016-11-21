@@ -47,6 +47,8 @@ case $# in
 esac
 
 clone git github.com/urfave/cli v1.18.1
+clone git github.com/coreos/go-systemd v14
+clone git github.com/godbus/dbus v4.0.0
 #clone git github.com/Sirupsen/logrus v0.10.0
 #clone git github.com/containers/image LATEST_COMMIT
 #clone git github.com/containers/storage LATEST_COMMIT

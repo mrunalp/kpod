@@ -22,6 +22,14 @@ func main() {
 	app.Flags = []cli.Flag{}
 	app.Commands = []cli.Command{}
 
+	app.Action = func(c *cli.Context) error {
+		if err := RunContainer("testabc"); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
