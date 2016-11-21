@@ -10,15 +10,13 @@ import (
 // Public Functions
 
 // RunContainer runs a container with given ID
-func RunContainer(containerID string) error {
+func RunContainer(containerID string, containerPath string) error {
 	conn, err := dbus.NewSystemConnection()
 	if err != nil {
 		return err
 	}
 
-	serviceName := getUnitName(containerId)
-
-	return runContainerInternal(serviceName, conn)
+	return runContainerInternal(containerID, containerPath, conn)
 }
 
 // Internal Functions
@@ -29,11 +27,12 @@ func getUnitName(containerID string) string {
 }
 
 // Schedule a container as a transient systemd unit
-// TODO actually run a container and not a dummy process
-func runContainerInternal(serviceName string, conn *dbus.Conn) error {
+func runContainerInternal(containerID, containerPath string, conn *dbus.Conn) error {
 	if conn == nil {
 		return errors.New("No connection to DBus available!")
 	}
+
+	serviceName := getUnitName(containerID)
 
 	// Check if a unit with this name already exists
 	running, err := isContainerRunning(serviceName, conn)
@@ -50,7 +49,7 @@ func runContainerInternal(serviceName string, conn *dbus.Conn) error {
 	// TODO do we want to set uncleanIsFailure to true? Does it even matter for a transient unit? need more info
 	// TODO we're going to need to set more than just program being executed here - cgroups info, etc
 	jobProperties := []dbus.Property{
-		dbus.PropExecStart([]string{"/bin/sleep", "50"}, false),
+		dbus.PropExecStart([]string{"/usr/bin/runc", "start", "-b", containerPath, containerID}, false),
 	}
 
 	_, err = conn.StartTransientUnit(serviceName, "fail", jobProperties, statusChan)
@@ -64,16 +63,22 @@ func runContainerInternal(serviceName string, conn *dbus.Conn) error {
 		return fmt.Errorf("Error starting systemd unit for container %s", serviceName)
 	}
 
+	// TODO if the unit fails it sits around in systemd so you can get the logs with journald and such
+	// This is undesirable because then we can't restart it until we 'systemctl reset-failed' manually
+	// Should clean up the dead unit here
+
 	return nil
 }
 
 // Check if the container is already running
 // TODO query runc as well
 // We can differentiate if the container is actually running or if we had a name collision with the systemd unit
-func isContainerRunning(serviceName string, conn *dbus.Conn) (bool, error) {
+func isContainerRunning(containerID string, conn *dbus.Conn) (bool, error) {
 	if conn == nil {
 		return false, errors.New("No connection to DBus available!")
 	}
+
+	serviceName := getUnitName(containerID)
 
 	units, err := conn.ListUnits()
 	if err != nil {
@@ -82,6 +87,13 @@ func isContainerRunning(serviceName string, conn *dbus.Conn) (bool, error) {
 
 	for _, unit := range units {
 		if unit.Name == serviceName {
+			// We found the unit, but it's not running
+			// This should never happen, all our units are transient, disappear when they're done running
+			// This means we have a possible name collision with a non-kpod systemd service
+			if unit.ActiveState != "active" {
+				return false, fmt.Errorf("Unit %s found, but not running - name collision possible", serviceName)
+			}
+
 			return true, nil
 		}
 	}
