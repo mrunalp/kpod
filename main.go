@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli"
+	"github.com/mrunalp/kpod/systemcontainer"
 )
 
 const (
@@ -19,8 +20,27 @@ func main() {
 	app.Author = "Kpod Contributors"
 	app.EnableBashCompletion = true
 
-	app.Flags = []cli.Flag{}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "path",
+			Value: "",
+			Usage: "Path to runc bundle to run",
+		},
+	}
 	app.Commands = []cli.Command{}
+
+	app.Action = func(c *cli.Context) error {
+		if c.String("path") == "" {
+			log.Fatal("Must specify path to runc bundle to run")
+		}
+
+		// TODO use a reasonable containerID - randomly generate or pull from a flag
+		if err := systemcontainer.RunSystemContainer("123456", c.String("path")); err != nil {
+			return err
+		}
+
+		return nil
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
